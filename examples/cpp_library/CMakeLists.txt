@@ -33,8 +33,32 @@ set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -lstdc++")
 set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
 set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
 
-set(CMAKE_BUILD_TYPE release)
-# set(CMAKE_BUILD_TYPE debug)
+# set(CMAKE_BUILD_TYPE release)
+set(CMAKE_BUILD_TYPE debug)
+
+# TensorRT options
+set(TENSORRT_DIR /usr/local/tensorrt)
+# Include the TensorRT include directories
+include_directories(${TENSORRT_DIR}/include)
+# Specify the paths to the TensorRT libraries explicitly
+set(TRT_LIB_DIR "/usr/local/tensorrt/lib")
+find_library(
+  TRT_LIB_PATH nvinfer
+  HINTS ${TENSORRT_DIR}/lib
+  NO_DEFAULT_PATH)
+find_library(TRT_LIB_PATH nvinfer REQUIRED)
+message(STATUS "Found nvinfer library: ${TRT_LIB_PATH}")
+
+include_directories(/usr/TensorRT-LLM/cpp/include)
+set(TENSORRT_LLM_DIR /usr/TensorRT-LLM/tensorrt_llm)
+find_library(TRT_LLM_LIB_PATH nvinfer_plugin_tensorrt_llm
+             HINTS ${TENSORRT_LLM_DIR}/libs NO_DEFAULT_PATH)
+find_library(TRT_LLM_LIB_PATH nvinfer_plugin_tensorrt_llm REQUIRED)
+message(STATUS "Found nvinfer_plugin_tensorrt_llm library: ${TRT_LLM_LIB_PATH}")
+
+# Add the library paths
+link_directories(${TENSORRT_DIR}/lib)
+link_directories(${TENSORRT_LLM_DIR}/libs)
 
 find_package(CUDA REQUIRED)
 message(STATUS "CUDA library status:")
@@ -53,3 +77,9 @@ target_link_libraries(${TARGET_NAME} LINK_PRIVATE nvinfer)
 target_link_libraries(${TARGET_NAME} LINK_PRIVATE nvinfer_plugin_tensorrt_llm)
 
 target_include_directories(${TARGET_NAME} PUBLIC /usr/local/cuda/include)
+target_include_directories(${TARGET_NAME} PUBLIC /usr/local/tensorrt/include)
+
+set_target_properties(${TARGET_NAME} PROPERTIES
+    BUILD_WITH_INSTALL_RPATH TRUE
+    INSTALL_RPATH ${TENSORRT_LLM_DIR}/libs
+)
